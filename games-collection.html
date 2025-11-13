@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Arcade — Single File Games Collection</title>
+  <style>
+    :root{--bg:#0b1020;--card:#0f1724;--accent:#06b6d4;--muted:#9aa4b2;color-scheme:dark}
+    html,body{height:100%;margin:0;font-family:Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;background:linear-gradient(180deg,#041028 0%, #071022 100%);color:#e6eef6}
+    .wrap{max-width:1100px;margin:28px auto;padding:18px}
+    header{display:flex;gap:12px;align-items:center}
+    header h1{margin:0;font-size:20px}
+    nav{display:flex;gap:8px;flex-wrap:wrap}
+    button.tab{background:transparent;border:1px solid rgba(255,255,255,0.06);padding:8px 12px;border-radius:8px;color:var(--muted);cursor:pointer}
+    button.tab.active{border-color:var(--accent);color:var(--accent);box-shadow:0 6px 24px rgba(3,7,18,0.6)}
+    main{margin-top:18px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-radius:12px;padding:18px}
+    .game{display:none}
+    .game.active{display:block}
+    .row{display:flex;gap:12px}
+    .col{flex:1}
+    .panel{background:var(--card);padding:12px;border-radius:10px}
+    footer{margin-top:18px;color:var(--muted);font-size:13px}
+    canvas{background:#061022;border-radius:8px;display:block}
+    /* small UI tweaks for game controls */
+    .controls{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+    .btn{background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(0,0,0,0.02));padding:8px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);cursor:pointer;color:inherit}
+    .score{font-weight:600}
+    /* responsive */
+    @media (max-width:740px){.row{flex-direction:column}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>Arcade — Single-file HTML + JS games</h1>
+      <nav id="tabs" style="margin-left:auto"></nav>
+    </header>
+
+    <main>
+      <!-- Tic-Tac-Toe -->
+      <section id="tic" class="game active panel">
+        <h2>Tic‑Tac‑Toe</h2>
+        <div style="display:flex;gap:12px;align-items:flex-start">
+          <div>
+            <div id="ttt-board" style="display:grid;grid-template-columns:repeat(3,80px);grid-gap:6px"></div>
+            <div class="controls"><button class="btn" id="ttt-reset">Restart</button><div style="padding:6px 10px" id="ttt-status"></div></div>
+          </div>
+          <div style="min-width:220px">
+            <p>Simple 2-player (on same device). Click a square to place X or O.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Snake -->
+      <section id="snake" class="game panel">
+        <h2>Snake</h2>
+        <div class="row">
+          <div class="col">
+            <canvas id="snake-c" width="360" height="360"></canvas>
+            <div class="controls"><button class="btn" id="snake-start">Start</button><button class="btn" id="snake-stop">Stop</button><div class="score" id="snake-score">Score: 0</div></div>
+            <p style="margin-top:8px">Use arrow keys or swipe to move. Eat the green squares to grow.</p>
+          </div>
+          <div class="col panel">
+            <h3>How to play</h3>
+            <ol><li>Press Start</li><li>Use arrow keys</li><li>Don't hit walls or yourself</li></ol>
+          </div>
+        </div>
+      </section>
+
+      <!-- Pong -->
+      <section id="pong" class="game panel">
+        <h2>Pong</h2>
+        <div class="row">
+          <div class="col">
+            <canvas id="pong-c" width="600" height="320"></canvas>
+            <div class="controls"><button class="btn" id="pong-start">Start</button><button class="btn" id="pong-stop">Stop</button><div class="score" id="pong-score">0 — 0</div></div>
+            <p style="margin-top:8px">Left paddle: W/S. Right paddle: Arrow Up/Down.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Memory Match -->
+      <section id="memory" class="game panel">
+        <h2>Memory Match</h2>
+        <div id="mem-board" style="display:grid;grid-template-columns:repeat(4,70px);grid-gap:8px;max-width:320px"></div>
+        <div class="controls"><button class="btn" id="mem-reset">New</button><div id="mem-status" style="padding:8px"></div></div>
+      </section>
+
+      <!-- Whack-a-Mole -->
+      <section id="whack" class="game panel">
+        <h2>Whack‑a‑Mole</h2>
+        <div id="whack-grid" style="display:grid;grid-template-columns:repeat(3,120px);gap:12px"></div>
+        <div class="controls"><button class="btn" id="whack-start">Start</button><button class="btn" id="whack-stop">Stop</button><div id="whack-score" class="score">0</div></div>
+      </section>
+
+      <!-- Breakout (basic) -->
+      <section id="breakout" class="game panel">
+        <h2>Breakout</h2>
+        <canvas id="break-c" width="540" height="320"></canvas>
+        <div class="controls"><button class="btn" id="break-start">Start</button><button class="btn" id="break-reset">Reset</button><div id="break-score" class="score">Score: 0</div></div>
+      </section>
+
+    </main>
+
+    <footer>Drop this file into a GitHub repo and enable <strong>GitHub Pages</strong> from the repo settings to host it publicly. I can also help push it to a repo if you give me the repo details.</footer>
+  </div>
+
+<script>
+// --- Tabs ---
+const games = ['tic','snake','pong','memory','whack','breakout'];
+const tabs = document.getElementById('tabs');
+games.forEach(id=>{const b=document.createElement('button');b.className='tab'+(id==='tic'?' active':'');b.textContent=id.replace(/\-/g,' ').replace(/\b\w/g,ch=>ch.toUpperCase());b.onclick=()=>showGame(id);tabs.appendChild(b)});
+function showGame(id){document.querySelectorAll('.game').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));[...tabs.children].find(t=>t.textContent.toLowerCase().startsWith(id.replace('-',' '))).classList.add('active')}
+
+// ---------------- Tic-Tac-Toe ----------------
+(function(){const boardEl=document.getElementById('ttt-board');const status=document.getElementById('ttt-status');const reset=document.getElementById('ttt-reset');let board,turn,over;function make(){board=['','','','','','','','',''];turn='X';over=false;render();status.textContent='Turn: '+turn}
+function render(){boardEl.innerHTML='';board.forEach((v,i)=>{const d=document.createElement('div');d.style.cssText='width:80px;height:80px;display:flex;align-items:center;justify-content:center;background:linear-gradient(180deg,rgba(255,255,255,0.01),transparent);border-radius:8px;font-size:28px;cursor:pointer';d.textContent=v;d.onclick=()=>{if(over||v) return;board[i]=turn;turn=turn==='X'?'O':'X';check();render()};boardEl.appendChild(d)})}
+function check(){const wins=[[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];for(const w of wins){const [a,b,c]=w; if(board[a] && board[a]===board[b] && board[a]===board[c]){over=true;status.textContent='Winner: '+board[a];return}}if(board.every(x=>x)){over=true;status.textContent='Tie';return}status.textContent='Turn: '+turn}
+reset.onclick=make;make();})();
+
+// ---------------- Snake ----------------
+(function(){const c=document.getElementById('snake-c');const ctx=c.getContext('2d');const start=document.getElementById('snake-start');const stop=document.getElementById('snake-stop');const scoreEl=document.getElementById('snake-score');let size=18,cols=20,rows=20,dir=[1,0],snake,food,loopId,score=0;function rand(){return {x:Math.floor(Math.random()*cols),y:Math.floor(Math.random()*rows)}}
+function reset(){snake=[{x:10,y:10}];dir=[1,0];food=rand();score=0;scoreEl.textContent='Score: 0';draw()}
+function draw(){ctx.clearRect(0,0,c.width,c.height);ctx.fillStyle='#0ea5a4';snake.forEach(s=>{ctx.fillRect(s.x*size+2,s.y*size+2,size-4,size-4)});ctx.fillStyle='#7cfc00';ctx.fillRect(food.x*size+4,food.y*size+4,size-8,size-8)}
+function step(){const head={x:snake[0].x+dir[0],y:snake[0].y+dir[1]};if(head.x<0||head.x>=cols||head.y<0||head.y>=rows||snake.some(p=>p.x===head.x&&p.y===head.y)){clearInterval(loopId);return}snake.unshift(head);if(head.x===food.x&&head.y===food.y){score+=10;scoreEl.textContent='Score: '+score;food=rand()}else snake.pop();draw()}
+start.onclick=()=>{clearInterval(loopId);loopId=setInterval(step,120)};stop.onclick=()=>{clearInterval(loopId)};window.addEventListener('keydown',e=>{if(e.key==='ArrowUp'&&dir[1]!==1)dir=[0,-1];if(e.key==='ArrowDown'&&dir[1]!==-1)dir=[0,1];if(e.key==='ArrowLeft'&&dir[0]!==1)dir=[-1,0];if(e.key==='ArrowRight'&&dir[0]!==-1)dir=[1,0]});reset();
+})();
+
+// ---------------- Pong ----------------
+(function(){const c=document.getElementById('pong-c');const ctx=c.getContext('2d');const start=document.getElementById('pong-start');const stop=document.getElementById('pong-stop');const scoreEl=document.getElementById('pong-score');let upA=false,downA=false,upB=false,downB=false;let A={x:10,y:120,w:10,h:80},B={x:580,y:120,w:10,h:80},ball={x:300,y:160,vx:4,vy:3};let loop;function draw(){ctx.clearRect(0,0,c.width,c.height);ctx.fillStyle='#e6eef6';ctx.fillRect(A.x,A.y,A.w,A.h);ctx.fillRect(B.x-B.w,B.y,B.w,B.h);ctx.beginPath();ctx.arc(ball.x,ball.y,8,0,Math.PI*2);ctx.fill();}
+function step(){if(upA)A.y-=6;if(downA)A.y+=6;if(upB)B.y-=6;if(downB)B.y+=6;A.y=Math.max(0,Math.min(c.height-A.h,A.y));B.y=Math.max(0,Math.min(c.height-B.h,B.y));ball.x+=ball.vx;ball.y+=ball.vy;if(ball.y<=8||ball.y>=c.height-8)ball.vy=-ball.vy; // bounce top/bottom
+// paddle collisions
+if(ball.x-8<=A.x+A.w && ball.y> A.y && ball.y < A.y + A.h) ball.vx = Math.abs(ball.vx);
+if(ball.x+8>=B.x-B.w && ball.y> B.y && ball.y < B.y + B.h) ball.vx = -Math.abs(ball.vx);
+// score
+if(ball.x<0){scoreB++;resetBall()}if(ball.x>c.width){scoreA++;resetBall()}draw();scoreEl.textContent=scoreA+' — '+scoreB}
+let scoreA=0,scoreB=0;function resetBall(){ball.x=c.width/2;ball.y=c.height/2;ball.vx = (Math.random()>0.5?1:-1)*4;ball.vy = (Math.random()>0.5?1:-1)*3}
+start.onclick=()=>{clearInterval(loop);loop=setInterval(step,20)};stop.onclick=()=>{clearInterval(loop)};window.addEventListener('keydown',e=>{if(e.key==='w')upA=true;if(e.key==='s')downA=true;if(e.key==='ArrowUp')upB=true;if(e.key==='ArrowDown')downB=true});window.addEventListener('keyup',e=>{if(e.key==='w')upA=false;if(e.key==='s')downA=false;if(e.key==='ArrowUp')upB=false;if(e.key==='ArrowDown')downB=false});resetBall();draw();
+})();
+
+// ---------------- Memory Match ----------------
+(function(){const board=document.getElementById('mem-board');const resetBtn=document.getElementById('mem-reset');const status=document.getElementById('mem-status');let cards,first=null,lock=false,matches=0;function newGame(){const vals=[1,2,3,4,5,6,7,8];cards=shuffle(vals.concat(vals));board.innerHTML='';matches=0;status.textContent='';cards.forEach((v,i)=>{const d=document.createElement('div');d.style.cssText='width:70px;height:70px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:20px;background:#071426;cursor:pointer';d.dataset.val=v;d.textContent='';d.onclick=()=>flip(d);board.appendChild(d)})}
+function flip(el){if(lock||el===first||el.classList.contains('matched'))return;el.textContent=el.dataset.val;el.style.background='#063c3a';if(!first){first=el;return}if(first.dataset.val===el.dataset.val){first.classList.add('matched');el.classList.add('matched');matches+=1;if(matches===8)status.textContent='You won!';first=null}else{lock=true;setTimeout(()=>{first.textContent='';el.textContent='';first.style.background='#071426';el.style.background='#071426';first=null;lock=false},700)}}
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+resetBtn.onclick=newGame;newGame();
+})();
+
+// ---------------- Whack-a-Mole ----------------
+(function(){const grid=document.getElementById('whack-grid');const start=document.getElementById('whack-start');const stop=document.getElementById('whack-stop');const scoreEl=document.getElementById('whack-score');let holes=[],active=-1,loop,score=0;for(let i=0;i<9;i++){const d=document.createElement('div');d.style.cssText='height:100px;border-radius:8px;background:#062233;display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer';d.onclick=()=>{if(i===active){score+=1;scoreEl.textContent=score;hide()}};grid.appendChild(d);holes.push(d)}
+function show(){hide();active=Math.floor(Math.random()*9);holes[active].textContent='🦫';holes[active].style.background='#0b6b3a'}
+function hide(){if(active>=0){holes[active].textContent='';holes[active].style.background='#062233';active=-1}}
+function step(){show();setTimeout(hide,900)}
+start.onclick=()=>{clearInterval(loop);score=0;scoreEl.textContent=0;loop=setInterval(step,1000)};stop.onclick=()=>{clearInterval(loop);hide()}
+})();
+
+// ---------------- Breakout (basic) ----------------
+(function(){const c=document.getElementById('break-c');const ctx=c.getContext('2d');const start=document.getElementById('break-start');const reset=document.getElementById('break-reset');const scoreEl=document.getElementById('break-score');let paddle={w:80,h:10,x:230},ball={x:270,y:200,vx:3,vy:-3,r:8},bricks=[],rows=4,cols=7,loop,score=0;function init(){bricks=[];for(let r=0;r<rows;r++){for(let col=0;col<cols;col++){bricks.push({x:60+col*66,y:30+r*26,w:60,h:18,alive:true})}}score=0;scoreEl.textContent='Score: 0';draw()}function draw(){ctx.clearRect(0,0,c.width,c.height);ctx.fillStyle='#fff';ctx.fillRect(paddle.x, c.height-paddle.h-6, paddle.w, paddle.h);ctx.beginPath();ctx.arc(ball.x,ball.y,ball.r,0,Math.PI*2);ctx.fill();bricks.forEach(b=>{if(b.alive){ctx.fillStyle='#0ea5a4';ctx.fillRect(b.x,b.y,b.w,b.h)}})}
+function step(){ball.x+=ball.vx;ball.y+=ball.vy;if(ball.x<ball.r||ball.x>c.width-ball.r)ball.vx*=-1;if(ball.y<ball.r)ball.vy*=-1;if(ball.y>c.height){clearInterval(loop)} // lost
+// paddle collision
+if(ball.y+ball.r >= c.height-paddle.h-6 && ball.x>paddle.x && ball.x<paddle.x+paddle.w) ball.vy=-Math.abs(ball.vy);
+// bricks
+bricks.forEach(b=>{if(b.alive && ball.x>b.x && ball.x<b.x+b.w && ball.y>b.y && ball.y<b.y+b.h){b.alive=false;ball.vy*=-1;score+=10;scoreEl.textContent='Score: '+score}});
+draw()}
+start.onclick=()=>{clearInterval(loop);loop=setInterval(step,20)};reset.onclick=init;window.addEventListener('mousemove',e=>{const rect=c.getBoundingClientRect();paddle.x = Math.max(0,Math.min(c.width-paddle.w, e.clientX-rect.left - paddle.w/2))});init();
+})();
+
+</script>
+</body>
+</html>
